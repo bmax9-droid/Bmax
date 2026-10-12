@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -58,7 +57,7 @@
         
         <!-- HOME FEED VIEW -->
         <section id="view-home" class="view-section w-full h-[calc(100vh-7rem)] snap-container overflow-y-scroll no-scrollbar flex flex-col">
-            <!-- Dynamic Feed items injected here -->
+            <!-- Feed items will be dynamically injected here from Supabase database -->
         </section>
 
         <!-- DISCOVER VIEW -->
@@ -217,4 +216,364 @@
 
     <!-- UPLOAD MODAL -->
     <div id="upload-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-3xl p-6 space-y-4 shadow-
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-3xl p-6 space-y-4 shadow-2xl relative animate-in fade-in zoom-in duration-200">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-base text-white">Upload New Image</h3>
+                <button onclick="closeUploadModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <!-- Upload Preview Area -->
+            <div id="upload-dropzone" class="border-2 border-dashed border-slate-700 rounded-2xl p-6 text-center cursor-pointer hover:border-pink-500 transition relative overflow-hidden aspect-[4/3] flex flex-col items-center justify-center bg-slate-950/50">
+                <input type="file" id="upload-file-input" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer" onchange="previewSelectedImage(event)">
+                <div id="upload-placeholder-content" class="space-y-2">
+                    <i class="fa-solid fa-cloud-arrow-up text-3xl text-pink-500"></i>
+                    <p class="text-xs text-slate-300 font-medium">Click or drag image to upload</p>
+                    <p class="text-[10px] text-slate-500">Supports JPG, PNG, WEBP (Max 10MB)</p>
+                </div>
+                <img id="upload-preview-img" class="absolute inset-0 w-full h-full object-cover hidden">
+            </div>
+            <!-- Caption Input -->
+            <textarea id="upload-caption" placeholder="Write a catchy caption with hashtags..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-pink-500 resize-none h-20"></textarea>
+            <div class="bg-pink-500/10 border border-pink-500/20 rounded-xl p-2.5 flex items-center space-x-2 text-pink-400 text-xs">
+                <i class="fa-solid fa-bolt"></i>
+                <span>Uploading awards <strong>+2 reputation points</strong> instantly!</span>
+            </div>
+            <!-- Connected to handleImageUpload(event) -->
+            <button onclick="handleImageUpload(event)" id="submit-upload-btn" class="w-full bg-gradient-to-r from-pink-500 to-cyan-400 text-slate-950 font-bold py-3 rounded-xl text-xs transition shadow-lg hover:opacity-90">Post to bmax</button>
+        </div>
+    </div>
+
+    <!-- EDIT PROFILE MODAL -->
+    <div id="edit-profile-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-3xl p-6 space-y-4 shadow-2xl relative">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-base text-white">Edit Profile</h3>
+                <button onclick="closeEditProfileModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="text-[11px] font-semibold text-slate-400">Profile Name</label>
+                    <input type="text" id="input-profile-name" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white mt-1 focus:outline-none focus:border-pink-500">
+                </div>
+                <div>
+                    <label class="text-[11px] font-semibold text-slate-400">Username</label>
+                    <input type="text" id="input-username" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white mt-1 focus:outline-none focus:border-pink-500">
+                </div>
+                <div>
+                    <div class="flex justify-between items-center">
+                        <label class="text-[11px] font-semibold text-slate-400">Profile Description (Bio)</label>
+                        <span id="bio-char-count" class="text-[10px] text-slate-500">0/200</span>
+                    </div>
+                    <textarea id="input-bio" maxlength="200" oninput="updateBioCounter()" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white mt-1 focus:outline-none focus:border-pink-500 resize-none h-20"></textarea>
+                </div>
+                <div>
+                    <label class="text-[11px] font-semibold text-slate-400">Website Link (Optional)</label>
+                    <input type="url" id="input-website" placeholder="https://yourwebsite.com" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white mt-1 focus:outline-none focus:border-pink-500">
+                </div>
+            </div>
+            <button onclick="saveProfileChanges()" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 rounded-xl text-xs transition shadow-lg">Save Changes</button>
+        </div>
+    </div>
+
+    <!-- SETTINGS & STATS MODAL -->
+    <div id="settings-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-3xl p-6 space-y-4 shadow-2xl relative">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-base text-white">Settings & Statistics</h3>
+                <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="space-y-3">
+                <!-- Account Status Section -->
+                <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-1">
+                    <span class="text-[10px] font-bold text-pink-500 uppercase tracking-wider">Account Status</span>
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-slate-200 font-medium">Verified bmax Creator</span>
+                        <span class="bg-emerald-500/20 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-500/30">Active</span>
+                    </div>
+                </div>
+                <!-- Reputation Gauge Statistics -->
+                <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-2">
+                    <span class="text-[10px] font-bold text-cyan-400 uppercase tracking-wider">Reputation Gauge Stats</span>
+                    <div class="flex justify-between text-xs text-slate-300">
+                        <span>Total Gauge Points</span>
+                        <span id="settings-total-points" class="font-bold text-white">48 pts</span>
+                    </div>
+                    <div class="flex justify-between text-xs text-slate-300">
+                        <span>Upload Bonuses (+2 pts each)</span>
+                        <span class="font-bold text-white">Uploads</span>
+                    </div>
+                    <div class="flex justify-between text-xs text-slate-300">
+                        <span>Upvote Rewards (+10 pts each)</span>
+                        <span class="font-bold text-white">Likes</span>
+                    </div>
+                </div>
+                <!-- Activities Log Section -->
+                <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-2 max-h-36 overflow-y-auto no-scrollbar">
+                    <span class="text-[10px] font-bold text-purple-400 uppercase tracking-wider">Recent Activities</span>
+                    <div id="activities-log-list" class="space-y-2 text-[11px]">
+                        <div class="flex justify-between text-slate-300 border-b border-slate-900 pb-1">
+                            <span>Uploaded new image (+2 rep)</span>
+                            <span class="text-slate-500">2h ago</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button onclick="closeSettingsModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-2.5 rounded-xl text-xs transition">Close Settings</button>
+        </div>
+    </div>
+
+    <script>
+        // Supabase configuration connected with your provided keys
+        const SUPABASE_URL = 'https://nlkjduhfezqaqzdyjqhu.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_XMqzyI6aZ92LddVlnGdzqw_ZpCoiVEY';
+        let supabaseClient = null;
+
+        try {
+            if (window.supabase) {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            }
+        } catch (e) {
+            console.warn('Supabase initialization error:', e);
+        }
+
+        // State Management
+        let userProfile = {
+            name: "Alex Morgan",
+            username: "@alex_creator",
+            bio: "Creating digital worlds and sharing vibrant moments one capture at a time. Welcome to my bmax profile! 🚀",
+            website: "https://bmax.social",
+            following: 142,
+            followers: 3800,
+            favorites: 524,
+            reputationPoints: 48,
+            avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200"
+        };
+
+        let activitiesLog = [
+            { text: "Uploaded new image (+2 rep)", time: "2h ago" },
+            { text: "Received upvote (+10 rep)", time: "Yesterday" }
+        ];
+
+        let postsData = [];
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`view-${tabName}`).classList.remove('hidden');
+
+            const tabs = ['home', 'discover', 'inbox', 'profile'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`nav-btn-${t}`);
+                if (btn) {
+                    if (t === tabName) {
+                        btn.className = "flex flex-col items-center text-pink-500 space-y-1 transition";
+                    } else {
+                        btn.className = "flex flex-col items-center text-slate-400 hover:text-white space-y-1 transition";
+                    }
+                }
+            });
+
+            const header = document.querySelector('header');
+            if (tabName === 'home') {
+                header.classList.remove('hidden');
+            } else {
+                header.classList.add('hidden');
+            }
+        }
+
+        function switchFeedTab(subTab) {
+            const followingBtn = document.getElementById('header-following-btn');
+            const foryouBtn = document.getElementById('header-foryou-btn');
+            if (subTab === 'following') {
+                followingBtn.className = "text-white border-b-2 border-pink-500 pb-0.5";
+                foryouBtn.className = "transition hover:text-white";
+            } else {
+                foryouBtn.className = "text-white border-b-2 border-pink-500 pb-0.5";
+                followingBtn.className = "transition hover:text-white";
+            }
+        }
+
+        function switchInboxTab(tab) {
+            const actBtn = document.getElementById('inbox-tab-activity');
+            const msgBtn = document.getElementById('inbox-tab-messages');
+            if (tab === 'activity') {
+                actBtn.className = "px-3 py-1 rounded-lg text-xs font-semibold bg-pink-500 text-white transition";
+                msgBtn.className = "px-3 py-1 rounded-lg text-xs font-semibold text-slate-400 transition";
+            } else {
+                msgBtn.className = "px-3 py-1 rounded-lg text-xs font-semibold bg-pink-500 text-white transition";
+                actBtn.className = "px-3 py-1 rounded-lg text-xs font-semibold text-slate-400 transition";
+            }
+        }
+
+        function switchProfileTab(tab) {
+            const postsBtn = document.getElementById('profile-tab-posts');
+            const savedBtn = document.getElementById('profile-tab-saved');
+            if (tab === 'posts') {
+                postsBtn.className = "text-pink-500 border-b-2 border-pink-500 pb-2";
+                savedBtn.className = "text-slate-400 hover:text-white pb-2";
+            } else {
+                savedBtn.className = "text-pink-500 border-b-2 border-pink-500 pb-2";
+                postsBtn.className = "text-slate-400 hover:text-white pb-2";
+            }
+        }
+
+        function openUploadModal() {
+            document.getElementById('upload-modal').classList.remove('hidden');
+        }
+
+        function closeUploadModal() {
+            document.getElementById('upload-modal').classList.add('hidden');
+        }
+
+        function previewSelectedImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const previewImg = document.getElementById('upload-preview-img');
+                    const placeholder = document.getElementById('upload-placeholder-content');
+                    previewImg.src = e.target.result;
+                    previewImg.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // =================================================================
+        // FETCH PERSISTENT POSTS FROM SUPABASE DATABASE ON LOAD
+        // =================================================================
+        async function fetchPostsFromDatabase() {
+            if (!supabaseClient) {
+                renderFeed();
+                renderProfilePosts();
+                return;
+            }
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('posts')
+                    .select(`
+                        id,
+                        image_url,
+                        caption,
+                        upvotes,
+                        created_at,
+                        profiles (
+                            username,
+                            avatar_url
+                        )
+                    `)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                if (data && data.length > 0) {
+                    postsData = data.map(post => ({
+                        id: post.id,
+                        username: post.profiles?.username || "bmax_user",
+                        userAvatar: post.profiles?.avatar_url || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100",
+                        imageUrl: post.image_url,
+                        caption: post.caption || "",
+                        upvotes: post.upvotes || 0
+                    }));
+                }
+                renderFeed();
+                renderProfilePosts();
+            } catch (err) {
+                console.error("Error fetching posts:", err);
+            }
+        }
+
+        // =================================================================
+        // HANDLE IMAGE UPLOAD TO SUPABASE STORAGE & DATABASE (+2 REPUTATION RULE)
+        // =================================================================
+        async function handleImageUpload(event) {
+            event.preventDefault();
+
+            const fileInput = document.getElementById('upload-file-input');
+            const captionInput = document.getElementById('upload-caption');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert("Please select an image first!");
+                return;
+            }
+
+            if (!supabaseClient) {
+                alert("Supabase client is not initialized.");
+                return;
+            }
+
+            try {
+                const submitBtn = document.getElementById('submit-upload-btn');
+                submitBtn.innerText = "Uploading to Supabase...";
+                submitBtn.disabled = true;
+
+                // Get current auth session user
+                const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+                if (authError || !user) {
+                    throw new Error("You must be logged in to upload pictures.");
+                }
+
+                // 1. Upload file to Supabase Storage bucket ('bmax-images')
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+
+                const { error: storageError } = await supabaseClient.storage
+                    .from('bmax-images')
+                    .upload(fileName, file, { cacheControl: '3600', upsert: false });
+
+                if (storageError) throw storageError;
+
+                // Get public URL
+                const { data: publicUrlData } = supabaseClient.storage
+                    .from('bmax-images')
+                    .getPublicUrl(fileName);
+
+                // 2. Insert record into Supabase 'posts' table
+                const { error: dbError } = await supabaseClient
+                    .from('posts')
+                    .insert([
+                        {
+                            user_id: user.id,
+                            image_url: publicUrlData.publicUrl,
+                            caption: captionInput.value || ""
+                        }
+                    ]);
+
+                if (dbError) throw dbError;
+
+                // 3. Award +2 reputation gauge points instantly
+                userProfile.reputationPoints += 2;
+                activitiesLog.unshift({ text: "Uploaded new image (+2 rep)", time: "Just now" });
+
+                await fetchPostsFromDatabase();
+                updateProfileUI();
+                updateSettingsUI();
+                closeUploadModal();
+                resetUploadForm();
+                
+                submitBtn.innerText = "Post to bmax";
+                submitBtn.disabled = false;
+
+            } catch (err) {
+                console.error("Upload failed:", err);
+                alert("Upload failed: " + err.message);
+                const submitBtn = document.getElementById('submit-upload-btn');
+                submitBtn.innerText = "Post to bmax";
+                submitBtn.disabled = false;
+            }
+        }
+
+        function resetUploadForm() {
+            document.getElementById('upload-preview-img').classList.add('hidden');
+            document.getElementById('upload-placeholder-content').classList.remove('hidden');
+            document.getElementById('upload-caption').value = '';
+            document.getElementById('upload-file-input').value = '';
+        }
+
+        function renderFeed() {
+            const homeContainer = document.getElementById('view-home');
+            homeContainer.innerHTML = '';
+
+            if (postsData.length === 0) {
+                homeContainer.innerHTML = `<div class="flex items-center justify-center h-full text-slate-500 text-xs
