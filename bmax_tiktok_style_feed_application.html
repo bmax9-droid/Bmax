@@ -1,862 +1,572 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-black select-none">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>bmax - Elevate Your Visuals</title>
-  
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- Lucide Icons CDN -->
-  <script src="https://unpkg.com/lucide@latest"></script>
-  
-  <!-- Supabase JS SDK CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <!-- Google Font: Inter -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-          },
-          colors: {
-            bmax: {
-              pink: '#ff0050',
-              cyan: '#00f2fe',
-              violet: '#7928ca',
-              dark: '#121212',
-              card: '#1e1e1e'
-            }
-          },
-          animation: {
-            'spin-slow': 'spin 5s linear infinite',
-            'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-            'bounce-short': 'bounceShort 0.4s ease-out',
-            'marquee': 'marquee 10s linear infinite'
-          },
-          keyframes: {
-            bounceShort: {
-              '0%, 100%': { transform: 'scale(1)' },
-              '50%': { transform: 'scale(1.3)' },
-            },
-            marquee: {
-              '0%': { transform: 'translateX(100%)' },
-              '100%': { transform: 'translateX(-100%)' }
-            }
-          }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>bmax - TikTok-Style Social Feed</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome CDN for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            overflow-x: hidden;
         }
-      }
-    }
-  </script>
-
-  <style>
-    /* Custom scrollbar and snap scroll mechanics */
-    ::-webkit-scrollbar {
-      width: 0px;
-      background: transparent;
-    }
-    
-    .hide-scrollbar {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
-
-    .snap-y-mandatory {
-      scroll-snap-type: y mandatory;
-      overflow-y: scroll;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .snap-start-item {
-      scroll-snap-align: start;
-      scroll-snap-stop: always;
-    }
-
-    /* Glassmorphism utility */
-    .glass {
-      background: rgba(22, 22, 26, 0.75);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-    }
-
-    .text-glow {
-      text-shadow: 0 0 10px rgba(255, 0, 80, 0.6), 0 0 20px rgba(0, 242, 254, 0.4);
-    }
-  </style>
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        /* Hide scrollbar for IE, Edge and Firefox */
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        .snap-container {
+            scroll-snap-type: y mandatory;
+        }
+        .snap-item {
+            scroll-snap-align: start;
+        }
+    </style>
 </head>
-<body class="h-full bg-black text-white font-sans overflow-hidden">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between selection:bg-pink-500 selection:text-white">
 
-  <!-- MAIN APP CONTAINER -->
-  <div class="relative w-full h-full max-w-md mx-auto bg-black flex flex-col justify-between overflow-hidden shadow-2xl border-x border-neutral-900">
-
-    <!-- TOP HEADER OVERLAY -->
-    <header class="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-4 pt-4 pb-2 bg-gradient-to-b from-black/80 via-black/40 to-transparent pointer-events-auto">
-      <div class="flex items-center space-x-2">
-        <i data-lucide="tv" class="w-6 h-6 text-bmax-pink animate-pulse"></i>
-        <span class="font-extrabold text-xl tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-bmax-pink via-bmax-cyan to-white text-glow">bmax</span>
-      </div>
-
-      <!-- Feed Tab Controls -->
-      <div class="flex space-x-4 font-semibold text-sm">
-        <button id="tab-following" onclick="switchFeedTab('following')" class="text-neutral-400 hover:text-white transition cursor-pointer">Following</button>
-        <div class="w-[1px] h-4 bg-neutral-700 my-auto"></div>
-        <button id="tab-foryou" onclick="switchFeedTab('foryou')" class="text-white border-b-2 border-bmax-pink pb-0.5 cursor-pointer">For You</button>
-      </div>
-
-      <div class="flex items-center space-x-3">
-        <button onclick="triggerSearchToast()" class="p-1.5 rounded-full glass text-neutral-200 hover:text-white transition">
-          <i data-lucide="search" class="w-5 h-5"></i>
+    <!-- Top Header Navigation -->
+    <header class="fixed top-0 left-0 right-0 z-40 bg-gradient-to-b from-slate-950/80 to-transparent backdrop-blur-md px-4 py-3 flex items-center justify-between max-w-md mx-auto">
+        <div class="flex items-center space-x-1 cursor-pointer" onclick="switchTab('home')">
+            <span class="text-xl font-black tracking-tighter text-pink-500">bmax</span>
+            <div class="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse"></div>
+        </div>
+        <div class="flex space-x-6 text-sm font-semibold text-slate-300">
+            <button onclick="switchFeedTab('following')" id="header-following-btn" class="transition hover:text-white">Following</button>
+            <button onclick="switchFeedTab('foryou')" id="header-foryou-btn" class="text-white border-b-2 border-pink-500 pb-0.5">For You</button>
+        </div>
+        <button onclick="openSearchModal()" class="text-slate-300 hover:text-white text-lg">
+            <i class="fa-solid fa-magnifying-glass"></i>
         </button>
-      </div>
     </header>
 
-    <!-- FEED CONTAINER (TikTok Snap Scroll) -->
-    <main id="feed-container" class="w-full h-full snap-y-mandatory hide-scrollbar relative bg-neutral-950">
-      <!-- Dynamic Feed Items Inserted via JavaScript -->
+    <!-- Main Content Area -->
+    <main class="flex-1 w-full max-w-md mx-auto relative pt-14 pb-20 overflow-y-auto no-scrollbar" id="main-container">
+        
+        <!-- HOME FEED VIEW -->
+        <section id="view-home" class="view-section w-full h-[calc(100vh-7rem)] snap-container overflow-y-scroll no-scrollbar flex flex-col">
+            <!-- Feed items will be dynamically injected here -->
+            <div class="snap-item w-full h-full flex flex-col justify-center items-center bg-slate-900 relative">
+                <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600" class="w-full h-full object-cover" alt="Feed Item">
+                <div class="absolute bottom-6 left-4 right-16 z-20">
+                    <h3 class="font-bold text-lg text-white">@alex_creator</h3>
+                    <p class="text-sm text-slate-200 mt-1">Neon cyber aesthetics in downtown Tokyo 🌃✨ #bmax #cyberpunk</p>
+                </div>
+                <div class="absolute bottom-16 right-4 z-20 flex flex-col items-center space-y-4">
+                    <button class="w-12 h-12 bg-slate-900/60 backdrop-blur-md rounded-full flex items-center justify-center text-pink-500 text-xl shadow-lg hover:scale-110 transition">
+                        <i class="fa-solid fa-heart"></i>
+                    </button>
+                    <span class="text-xs font-bold text-white">1.4K</span>
+                    <button class="w-12 h-12 bg-slate-900/60 backdrop-blur-md rounded-full flex items-center justify-center text-white text-xl shadow-lg hover:scale-110 transition">
+                        <i class="fa-solid fa-comment"></i>
+                    </button>
+                    <span class="text-xs font-bold text-white">84</span>
+                    <button class="w-12 h-12 bg-slate-900/60 backdrop-blur-md rounded-full flex items-center justify-center text-white text-xl shadow-lg hover:scale-110 transition">
+                        <i class="fa-solid fa-bookmark"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- DISCOVER VIEW -->
+        <section id="view-discover" class="view-section hidden p-4 space-y-4">
+            <h2 class="text-2xl font-bold tracking-tight text-white mb-2">Discover Trends</h2>
+            <div class="relative">
+                <i class="fa-solid fa-search absolute left-3 top-3.5 text-slate-400"></i>
+                <input type="text" placeholder="Search creators, hashtags, sounds..." class="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-pink-500 transition">
+            </div>
+            <div class="grid grid-cols-2 gap-3 mt-4">
+                <div class="bg-slate-900 rounded-2xl overflow-hidden aspect-[3/4] relative group cursor-pointer">
+                    <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=400" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent p-3 flex flex-col justify-end">
+                        <span class="text-xs font-bold text-cyan-400">#neonart</span>
+                        <p class="text-xs text-slate-200">Digital dreams</p>
+                    </div>
+                </div>
+                <div class="bg-slate-900 rounded-2xl overflow-hidden aspect-[3/4] relative group cursor-pointer">
+                    <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent p-3 flex flex-col justify-end">
+                        <span class="text-xs font-bold text-pink-400">#travel</span>
+                        <p class="text-xs text-slate-200">Ocean breeze</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- INBOX VIEW -->
+        <section id="view-inbox" class="view-section hidden p-4 space-y-4">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold text-white">Inbox</h2>
+                <div class="flex space-x-2 bg-slate-900 p-1 rounded-xl border border-slate-800">
+                    <button onclick="switchInboxTab('activity')" id="inbox-tab-activity" class="px-3 py-1 rounded-lg text-xs font-semibold bg-pink-500 text-white transition">Activity</button>
+                    <button onclick="switchInboxTab('messages')" id="inbox-tab-messages" class="px-3 py-1 rounded-lg text-xs font-semibold text-slate-400 transition">Messages</button>
+                </div>
+            </div>
+            <!-- Notification list -->
+            <div id="inbox-content-list" class="space-y-3">
+                <div class="flex items-center space-x-3 p-3 bg-slate-900/60 rounded-2xl border border-slate-800/60">
+                    <div class="w-10 h-10 rounded-full bg-pink-500/20 text-pink-500 flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-heart"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-xs text-slate-200"><span class="font-bold text-white">@sarah_art</span> liked your picture (+10 Rep)</p>
+                        <span class="text-[10px] text-slate-500">2 hours ago</span>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl overflow-hidden bg-slate-800">
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100" class="w-full h-full object-cover">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PROFILE VIEW -->
+        <section id="view-profile" class="view-section hidden p-4 space-y-6">
+            <!-- Profile Header -->
+            <div class="flex flex-col items-center text-center space-y-3 pt-2">
+                <div class="relative">
+                    <img id="profile-avatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200" class="w-24 h-24 rounded-full object-cover border-2 border-pink-500 shadow-xl">
+                    <span class="absolute bottom-0 right-0 bg-cyan-400 text-slate-950 text-[10px] font-bold px-2 py-0.5 rounded-full shadow">bmax Pro</span>
+                </div>
+                <div>
+                    <h2 id="profile-display-name" class="text-xl font-bold text-white">Alex Morgan</h2>
+                    <p id="profile-username" class="text-xs text-slate-400">@alex_creator</p>
+                </div>
+                <p id="profile-bio" class="text-xs text-slate-300 max-w-xs leading-relaxed">Creating digital worlds and sharing vibrant moments one capture at a time. Welcome to my bmax profile! 🚀</p>
+                <div id="profile-website-container" class="hidden items-center space-x-1 text-xs text-pink-400 font-medium">
+                    <i class="fa-solid fa-link"></i>
+                    <a id="profile-website-link" href="#" target="_blank" class="hover:underline"></a>
+                </div>
+
+                <!-- Stats Bar -->
+                <div class="flex justify-around w-full py-4 bg-slate-900/80 rounded-2xl border border-slate-800/80 my-2">
+                    <div class="flex flex-col">
+                        <span id="stat-following" class="font-bold text-white text-base">142</span>
+                        <span class="text-[11px] text-slate-400">Following</span>
+                    </div>
+                    <div class="w-[1px] bg-slate-800"></div>
+                    <div class="flex flex-col">
+                        <span id="stat-followers" class="font-bold text-white text-base">3.8K</span>
+                        <span class="text-[11px] text-slate-400">Followers</span>
+                    </div>
+                    <div class="w-[1px] bg-slate-800"></div>
+                    <div class="flex flex-col">
+                        <span id="stat-favorites" class="font-bold text-white text-base">524</span>
+                        <span class="text-[11px] text-slate-400">Favorites</span>
+                    </div>
+                </div>
+
+                <!-- Reputation Gauge Card -->
+                <div class="w-full bg-gradient-to-r from-slate-900 to-slate-900/90 border border-slate-800 rounded-2xl p-4 text-left space-y-2 relative overflow-hidden">
+                    <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-pink-500/10 rounded-full blur-xl pointer-events-none"></div>
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center space-x-2">
+                            <i class="fa-solid fa-gauge-high text-pink-500"></i>
+                            <span class="text-xs font-bold text-white">Reputation Gauge</span>
+                        </div>
+                        <span id="reputation-score-badge" class="text-xs font-bold text-cyan-400 bg-cyan-950/60 px-2.5 py-1 rounded-full border border-cyan-800/50">48 Points</span>
+                    </div>
+                    <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                        <div id="reputation-gauge-bar" class="bg-gradient-to-r from-pink-500 to-cyan-400 h-full w-[48%] transition-all duration-500"></div>
+                    </div>
+                    <p class="text-[11px] text-slate-400">Upload images to boost your reputation gauge (+2 points per upload).</p>
+                </div>
+
+                <!-- Action Buttons: Edit Profile & Settings -->
+                <div class="flex space-x-3 w-full">
+                    <button onclick="openEditProfileModal()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-semibold py-2.5 rounded-xl text-xs transition border border-slate-700 shadow">
+                        <i class="fa-solid fa-pen mr-1.5"></i> Edit Profile
+                    </button>
+                    <button onclick="openSettingsModal()" class="px-4 bg-slate-800 hover:bg-slate-700 text-white font-semibold py-2.5 rounded-xl text-xs transition border border-slate-700 shadow">
+                        <i class="fa-solid fa-gear"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Profile Content Tabs (Posts / Saved) -->
+            <div class="border-t border-slate-800 pt-4">
+                <div class="flex justify-center space-x-12 pb-3 border-b border-slate-800/60 text-sm font-semibold">
+                    <button onclick="switchProfileTab('posts')" id="profile-tab-posts" class="text-pink-500 border-b-2 border-pink-500 pb-2">Posts</button>
+                    <button onclick="switchProfileTab('saved')" id="profile-tab-saved" class="text-slate-400 hover:text-white pb-2">Saved</button>
+                </div>
+                <!-- Grid items -->
+                <div id="profile-posts-grid" class="grid grid-cols-3 gap-2 mt-3">
+                    <div class="bg-slate-900 rounded-xl aspect-[3/4] overflow-hidden relative group">
+                        <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=300" class="w-full h-full object-cover">
+                        <div class="absolute bottom-1 left-1 text-[10px] font-bold text-white bg-black/50 px-1.5 py-0.5 rounded">
+                            <i class="fa-solid fa-heart mr-1 text-pink-500"></i>1.4K
+                        </div>
+                    </div>
+                    <div class="bg-slate-900 rounded-xl aspect-[3/4] overflow-hidden relative group">
+                        <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=300" class="w-full h-full object-cover">
+                        <div class="absolute bottom-1 left-1 text-[10px] font-bold text-white bg-black/50 px-1.5 py-0.5 rounded">
+                            <i class="fa-solid fa-heart mr-1 text-pink-500"></i>820
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
     </main>
 
-    <!-- PROFILE VIEW (Hidden by default, overlays feed) -->
-    <section id="profile-view" class="absolute inset-0 z-20 bg-neutral-950 overflow-y-auto hide-scrollbar hidden pb-20 pt-16 px-4">
-      <div class="flex flex-col items-center">
-        <!-- Profile Picture with Neon Ring -->
-        <div class="relative mb-3">
-          <div class="p-1 rounded-full bg-gradient-to-tr from-bmax-pink to-bmax-cyan shadow-lg shadow-bmax-pink/20">
-            <img id="user-profile-avatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" class="w-24 h-24 rounded-full object-cover border-2 border-black" alt="Profile Avatar">
-          </div>
-          <span class="absolute bottom-0 right-0 bg-bmax-pink text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-black flex items-center gap-0.5">
-            <i data-lucide="shield-check" class="w-3 h-3"></i> Elite
-          </span>
-        </div>
-
-        <h2 id="profile-username" class="text-xl font-bold">@alex_bmax</h2>
-        <p class="text-xs text-neutral-400 mt-0.5">Visual Artist & Motion Creator 🎨</p>
-
-        <!-- Reputation Badge Banner -->
-        <div class="mt-3 px-4 py-2 rounded-xl glass border border-bmax-cyan/30 flex items-center space-x-3">
-          <div class="p-2 rounded-lg bg-bmax-cyan/10 text-bmax-cyan">
-            <i data-lucide="award" class="w-6 h-6"></i>
-          </div>
-          <div>
-            <div class="text-[10px] uppercase font-bold tracking-wider text-neutral-400">bmax Reputation</div>
-            <div class="flex items-center space-x-1.5">
-              <span id="profile-rep-score" class="text-lg font-black text-transparent bg-clip-text bg-gradient-to-r from-bmax-cyan to-bmax-pink">1,480</span>
-              <span class="text-xs font-semibold text-emerald-400">Points</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Social Stats -->
-        <div class="flex items-center justify-around w-full max-w-xs my-5 text-center">
-          <div>
-            <div class="font-bold text-base">342</div>
-            <div class="text-xs text-neutral-400">Following</div>
-          </div>
-          <div class="w-[1px] h-6 bg-neutral-800"></div>
-          <div>
-            <div class="font-bold text-base">18.4K</div>
-            <div class="text-xs text-neutral-400">Followers</div>
-          </div>
-          <div class="w-[1px] h-6 bg-neutral-800"></div>
-          <div>
-            <div id="profile-total-likes" class="font-bold text-base">4.2K</div>
-            <div class="text-xs text-neutral-400">Upvotes</div>
-          </div>
-        </div>
-
-        <!-- Edit Profile Button -->
-        <button class="w-full max-w-xs py-2 bg-neutral-800 hover:bg-neutral-700 font-semibold rounded-lg text-xs transition border border-neutral-700 mb-6">
-          Edit Profile
+    <!-- Bottom Navigation Bar -->
+    <nav class="fixed bottom-0 left-0 right-0 z-40 bg-slate-950/90 backdrop-blur-xl border-t border-slate-900 px-4 py-2 flex items-center justify-between max-w-md mx-auto">
+        <button onclick="switchTab('home')" id="nav-btn-home" class="flex flex-col items-center text-pink-500 space-y-1 transition">
+            <i class="fa-solid fa-house text-lg"></i>
+            <span class="text-[10px] font-semibold">Home</span>
         </button>
-
-        <!-- User Gallery Tabs -->
-        <div class="w-full border-t border-neutral-800 pt-4">
-          <div class="flex justify-around text-xs font-semibold text-neutral-400 pb-3 border-b border-neutral-800">
-            <button class="text-white border-b-2 border-bmax-pink pb-2 flex items-center gap-1">
-              <i data-lucide="grid" class="w-4 h-4"></i> Uploads
-            </button>
-            <button class="hover:text-white flex items-center gap-1">
-              <i data-lucide="heart" class="w-4 h-4"></i> Liked
-            </button>
-            <button class="hover:text-white flex items-center gap-1">
-              <i data-lucide="bookmark" class="w-4 h-4"></i> Saved
-            </button>
-          </div>
-
-          <!-- Upload Grid -->
-          <div id="profile-gallery-grid" class="grid grid-cols-3 gap-1 mt-2">
-            <!-- Grid item sample -->
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- BOTTOM NAVIGATION BAR -->
-    <nav class="absolute bottom-0 left-0 right-0 z-30 flex items-center justify-between px-6 py-2.5 bg-black/90 backdrop-blur-md border-t border-neutral-900 pointer-events-auto">
-      <button onclick="switchMainTab('feed')" id="nav-feed" class="flex flex-col items-center text-white transition">
-        <i data-lucide="home" class="w-6 h-6"></i>
-        <span class="text-[10px] mt-0.5 font-medium">Home</span>
-      </button>
-
-      <button onclick="switchMainTab('discover')" id="nav-discover" class="flex flex-col items-center text-neutral-400 hover:text-white transition">
-        <i data-lucide="compass" class="w-6 h-6"></i>
-        <span class="text-[10px] mt-0.5 font-medium">Discover</span>
-      </button>
-
-      <!-- Center Plus Button (Upload Action) -->
-      <button onclick="openUploadModal()" class="group relative flex items-center justify-center">
-        <div class="absolute -inset-1 rounded-xl bg-gradient-to-r from-bmax-cyan to-bmax-pink opacity-75 group-hover:opacity-100 blur-xs transition"></div>
-        <div class="relative px-3.5 py-1.5 bg-white text-black rounded-lg flex items-center justify-center font-black">
-          <i data-lucide="plus" class="w-5 h-5 stroke-[3]"></i>
-        </div>
-      </button>
-
-      <button onclick="switchMainTab('inbox')" id="nav-inbox" class="flex flex-col items-center text-neutral-400 hover:text-white transition relative">
-        <i data-lucide="message-square" class="w-6 h-6"></i>
-        <span class="text-[10px] mt-0.5 font-medium">Inbox</span>
-        <span class="absolute top-0 right-1 w-2 h-2 rounded-full bg-bmax-pink"></span>
-      </button>
-
-      <button onclick="switchMainTab('profile')" id="nav-profile" class="flex flex-col items-center text-neutral-400 hover:text-white transition">
-        <i data-lucide="user" class="w-6 h-6"></i>
-        <span class="text-[10px] mt-0.5 font-medium">Profile</span>
-      </button>
+        <button onclick="switchTab('discover')" id="nav-btn-discover" class="flex flex-col items-center text-slate-400 hover:text-white space-y-1 transition">
+            <i class="fa-solid fa-compass text-lg"></i>
+            <span class="text-[10px] font-semibold">Discover</span>
+        </button>
+        <!-- Upload (+) Button -->
+        <button onclick="openUploadModal()" class="w-12 h-10 bg-gradient-to-r from-pink-500 to-cyan-400 rounded-xl flex items-center justify-center text-slate-950 font-bold text-lg shadow-lg hover:scale-105 transition">
+            <i class="fa-solid fa-plus"></i>
+        </button>
+        <button onclick="switchTab('inbox')" id="nav-btn-inbox" class="flex flex-col items-center text-slate-400 hover:text-white space-y-1 transition relative">
+            <i class="fa-solid fa-message text-lg"></i>
+            <span class="absolute -top-1 right-2 w-2 h-2 bg-pink-500 rounded-full"></span>
+            <span class="text-[10px] font-semibold">Inbox</span>
+        </button>
+        <button onclick="switchTab('profile')" id="nav-btn-profile" class="flex flex-col items-center text-slate-400 hover:text-white space-y-1 transition">
+            <i class="fa-solid fa-user text-lg"></i>
+            <span class="text-[10px] font-semibold">Profile</span>
+        </button>
     </nav>
 
     <!-- UPLOAD MODAL -->
-    <div id="upload-modal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-end sm:items-center justify-center hidden opacity-0 transition-opacity duration-300">
-      <div class="w-full max-w-md bg-neutral-900 rounded-t-2xl sm:rounded-2xl border border-neutral-800 p-5 overflow-hidden shadow-2xl relative animate-in slide-in-from-bottom duration-300">
-        
-        <!-- Modal Header -->
-        <div class="flex items-center justify-between pb-3 border-b border-neutral-800">
-          <div class="flex items-center space-x-2">
-            <div class="p-1.5 rounded-lg bg-bmax-pink/20 text-bmax-pink">
-              <i data-lucide="image-plus" class="w-5 h-5"></i>
+    <div id="upload-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-3xl p-6 space-y-4 shadow-2xl relative animate-in fade-in zoom-in duration-200">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-base text-white">Upload New Image</h3>
+                <button onclick="closeUploadModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            <h3 class="font-bold text-base">New Image Post</h3>
-          </div>
-          <button onclick="closeUploadModal()" class="p-1 rounded-full text-neutral-400 hover:text-white bg-neutral-800">
-            <i data-lucide="x" class="w-5 h-5"></i>
-          </button>
+            <!-- Upload Preview Area -->
+            <div id="upload-dropzone" class="border-2 border-dashed border-slate-700 rounded-2xl p-6 text-center cursor-pointer hover:border-pink-500 transition relative overflow-hidden aspect-[4/3] flex flex-col items-center justify-center bg-slate-950/50">
+                <input type="file" id="upload-file-input" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer" onchange="previewSelectedImage(event)">
+                <div id="upload-placeholder-content" class="space-y-2">
+                    <i class="fa-solid fa-cloud-arrow-up text-3xl text-pink-500"></i>
+                    <p class="text-xs text-slate-300 font-medium">Click or drag image to upload</p>
+                    <p class="text-[10px] text-slate-500">Supports JPG, PNG, WEBP (Max 10MB)</p>
+                </div>
+                <img id="upload-preview-img" class="absolute inset-0 w-full h-full object-cover hidden">
+            </div>
+            <!-- Caption Input -->
+            <textarea id="upload-caption" placeholder="Write a catchy caption with hashtags..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-pink-500 resize-none h-20"></textarea>
+            <div class="bg-pink-500/10 border border-pink-500/20 rounded-xl p-2.5 flex items-center space-x-2 text-pink-400 text-xs">
+                <i class="fa-solid fa-bolt"></i>
+                <span>Uploading awards <strong>+2 reputation points</strong> instantly!</span>
+            </div>
+            <button onclick="submitUpload()" class="w-full bg-gradient-to-r from-pink-500 to-cyan-400 text-slate-950 font-bold py-3 rounded-xl text-xs transition shadow-lg hover:opacity-9">Post to bmax</button>
         </div>
-
-        <!-- Reputation Award Callout -->
-        <div class="my-3 p-2.5 rounded-xl bg-gradient-to-r from-bmax-pink/10 via-bmax-violet/10 to-bmax-cyan/10 border border-bmax-pink/30 flex items-center space-x-3">
-          <i data-lucide="sparkles" class="w-5 h-5 text-bmax-cyan shrink-0 animate-bounce"></i>
-          <p class="text-xs text-neutral-300">
-            Publishing high-resolution visuals awards <span class="font-bold text-bmax-cyan">+10 Reputation Points</span> instantly!
-          </p>
-        </div>
-
-        <!-- Form Body -->
-        <form id="upload-form" onsubmit="handleImageUpload(event)" class="space-y-4">
-          
-          <!-- Image Picker Area -->
-          <div class="relative w-full h-48 border-2 border-dashed border-neutral-700 hover:border-bmax-cyan rounded-xl bg-neutral-950 flex flex-col items-center justify-center overflow-hidden transition group cursor-pointer" onclick="document.getElementById('image-file-input').click()">
-            <input type="file" id="image-file-input" accept="image/*" class="hidden" onchange="previewSelectedImage(event)">
-            
-            <div id="upload-placeholder" class="flex flex-col items-center text-center p-4">
-              <div class="p-3 rounded-full bg-neutral-900 text-neutral-400 group-hover:text-bmax-cyan group-hover:scale-110 transition">
-                <i data-lucide="upload-cloud" class="w-8 h-8"></i>
-              </div>
-              <p class="mt-2 text-xs font-semibold text-neutral-300">Tap to select an image from device</p>
-              <p class="text-[10px] text-neutral-500 mt-1">PNG, JPG, WEBP up to 10MB</p>
-            </div>
-
-            <!-- Preview Container -->
-            <img id="image-preview" src="" class="absolute inset-0 w-full h-full object-cover hidden" alt="Upload Preview">
-          </div>
-
-          <!-- Caption Input -->
-          <div>
-            <label class="block text-xs font-medium text-neutral-400 mb-1">Caption & Hashtags</label>
-            <textarea id="upload-caption" rows="2" placeholder="Write a catchy caption... #bmax #visuals #art" class="w-full bg-neutral-950 border border-neutral-800 rounded-xl p-3 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-bmax-pink transition resize-none"></textarea>
-          </div>
-
-          <!-- Supabase Simulation Progress Bar -->
-          <div id="upload-progress-container" class="hidden space-y-1.5">
-            <div class="flex justify-between text-[10px] text-neutral-400">
-              <span id="upload-status-text">Validating file format...</span>
-              <span id="upload-percent-text">0%</span>
-            </div>
-            <div class="w-full h-1.5 bg-neutral-800 rounded-full overflow-hidden">
-              <div id="upload-progress-bar" class="h-full bg-gradient-to-r from-bmax-cyan via-bmax-pink to-emerald-400 w-0 transition-all duration-300"></div>
-            </div>
-          </div>
-
-          <!-- Submit Button -->
-          <button type="submit" id="submit-upload-btn" class="w-full py-3 bg-gradient-to-r from-bmax-pink to-bmax-violet text-white font-bold text-xs rounded-xl hover:opacity-90 transition shadow-lg shadow-bmax-pink/25 flex items-center justify-center space-x-2">
-            <i data-lucide="arrow-up-circle" class="w-4 h-4"></i>
-            <span>Upload Picture & Earn Rep</span>
-          </button>
-        </form>
-
-      </div>
     </div>
 
-    <!-- COMMENTS SLIDING PANEL -->
-    <div id="comments-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end justify-center hidden">
-      <div class="w-full max-w-md h-[65%] bg-neutral-900 rounded-t-2xl border-t border-neutral-800 flex flex-col justify-between overflow-hidden">
-        
-        <!-- Header -->
-        <div class="px-4 py-3 border-b border-neutral-800 flex items-center justify-between">
-          <span id="comments-count-title" class="font-bold text-xs text-neutral-300">Comments (0)</span>
-          <button onclick="closeCommentsModal()" class="p-1 text-neutral-400 hover:text-white">
-            <i data-lucide="x" class="w-4 h-4"></i>
-          </button>
+    <!-- EDIT PROFILE MODAL -->
+    <div id="edit-profile-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-3xl p-6 space-y-4 shadow-2xl relative">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-base text-white">Edit Profile</h3>
+                <button onclick="closeEditProfileModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="text-[11px] font-semibold text-slate-400">Profile Name</label>
+                    <input type="text" id="input-profile-name" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white mt-1 focus:outline-none focus:border-pink-500">
+                </div>
+                <div>
+                    <label class="text-[11px] font-semibold text-slate-400">Username</label>
+                    <input type="text" id="input-username" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white mt-1 focus:outline-none focus:border-pink-500">
+                </div>
+                <div>
+                    <div class="flex justify-between items-center">
+                        <label class="text-[11px] font-semibold text-slate-400">Profile Description (Bio)</label>
+                        <span id="bio-char-count" class="text-[10px] text-slate-500">0/200</span>
+                    </div>
+                    <textarea id="input-bio" maxlength="200" oninput="updateBioCounter()" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white mt-1 focus:outline-none focus:border-pink-500 resize-none h-20"></textarea>
+                </div>
+                <div>
+                    <label class="text-[11px] font-semibold text-slate-400">Website Link (Optional)</label>
+                    <input type="url" id="input-website" placeholder="https://yourwebsite.com" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white mt-1 focus:outline-none focus:border-pink-500">
+                </div>
+            </div>
+            <button onclick="saveProfileChanges()" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 rounded-xl text-xs transition shadow-lg">Save Changes</button>
         </div>
-
-        <!-- Comments List Container -->
-        <div id="comments-list" class="flex-1 overflow-y-auto p-4 space-y-3">
-          <!-- Comments populated dynamically -->
-        </div>
-
-        <!-- Comment Input Box -->
-        <div class="p-3 border-t border-neutral-800 bg-neutral-950 flex items-center space-x-2">
-          <input type="text" id="comment-input" placeholder="Add a comment..." class="flex-1 bg-neutral-900 border border-neutral-800 rounded-full px-4 py-2 text-xs text-white focus:outline-none focus:border-bmax-cyan">
-          <button onclick="submitComment()" class="p-2 rounded-full bg-bmax-pink text-white hover:opacity-90">
-            <i data-lucide="send" class="w-4 h-4"></i>
-          </button>
-        </div>
-
-      </div>
     </div>
 
-    <!-- REPUTATION TOAST NOTIFICATION -->
-    <div id="rep-toast" class="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-neutral-900/90 border border-bmax-cyan/50 backdrop-blur-md text-white px-4 py-2 rounded-full shadow-2xl flex items-center space-x-2 pointer-events-none transition-all duration-300 opacity-0 transform -translate-y-4">
-      <div class="p-1 rounded-full bg-bmax-cyan text-black">
-        <i data-lucide="zap" class="w-4 h-4 fill-current"></i>
-      </div>
-      <span id="rep-toast-text" class="text-xs font-bold text-transparent bg-clip-text bg-gradient-to-r from-bmax-cyan to-white">+10 Rep Earned!</span>
+    <!-- SETTINGS & STATS MODAL -->
+    <div id="settings-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-3xl p-6 space-y-4 shadow-2xl relative">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-base text-white">Settings & Statistics</h3>
+                <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="space-y-3">
+                <!-- Account Status Section -->
+                <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-1">
+                    <span class="text-[10px] font-bold text-pink-500 uppercase tracking-wider">Account Status</span>
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-slate-200 font-medium">Verified bmax Creator</span>
+                        <span class="bg-emerald-500/20 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-500/30">Active</span>
+                    </div>
+                </div>
+                <!-- Reputation Gauge Statistics -->
+                <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-2">
+                    <span class="text-[10px] font-bold text-cyan-400 uppercase tracking-wider">Reputation Gauge Stats</span>
+                    <div class="flex justify-between text-xs text-slate-300">
+                        <span>Total Gauge Points</span>
+                        <span id="settings-total-points" class="font-bold text-white">48 pts</span>
+                    </div>
+                    <div class="flex justify-between text-xs text-slate-300">
+                        <span>Upload Bonuses (+2 pts each)</span>
+                        <span class="font-bold text-white">12 Uploads</span>
+                    </div>
+                    <div class="flex justify-between text-xs text-slate-300">
+                        <span>Upvote Rewards (+10 pts each)</span>
+                        <span class="font-bold text-white">2 Upvotes</span>
+                    </div>
+                </div>
+                <!-- Activities Log Section -->
+                <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-2 max-h-36 overflow-y-auto no-scrollbar">
+                    <span class="text-[10px] font-bold text-purple-400 uppercase tracking-wider">Recent Activities</span>
+                    <div id="activities-log-list" class="space-y-2 text-[11px]">
+                        <div class="flex justify-between text-slate-300 border-b border-slate-900 pb-1">
+                            <span>Uploaded new image (+2 rep)</span>
+                            <span class="text-slate-500">2h ago</span>
+                        </div>
+                        <div class="flex justify-between text-slate-300 border-b border-slate-900 pb-1">
+                            <span>Received upvote (+10 rep)</span>
+                            <span class="text-slate-500">Yesterday</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button onclick="closeSettingsModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-2.5 rounded-xl text-xs transition">Close Settings</button>
+        </div>
     </div>
 
-  </div>
-
-  <!-- JAVASCRIPT APP LOGIC -->
-  <script>
-    // -----------------------------------------------------------------
-    // 1. SUPABASE CLIENT CONFIGURATION
-    // Replace with your real Supabase project URL and Key
-    // -----------------------------------------------------------------
-    const SUPABASE_URL = "https://your-supabase-project.supabase.co";
-    const SUPABASE_ANON_KEY = "your-anon-key";
-    const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
-
-    // -----------------------------------------------------------------
-    // 2. MOCK DATA INITIALIZATION (Out-of-the-box Feed Data)
-    // -----------------------------------------------------------------
-    let postsData = [
-      {
-        id: "post-1",
-        username: "neon_vibes",
-        userAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80",
-        repBadge: "bmax Legend",
-        repScore: 3240,
-        imageUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&auto=format&fit=crop&q=80",
-        caption: "Sunset aesthetic at the coast 🌅 | Captured with ultra dynamic range! #sunset #ocean #bmax",
-        songTitle: "Cyber Dreams - Neon Pulse 🎵",
-        upvotes: 1240,
-        commentsCount: 89,
-        saves: 230,
-        isLiked: false,
-        isSaved: false,
-        comments: [
-          { user: "@cyber_fan", text: "The lighting here is unreal! 😍" },
-          { user: "@lens_master", text: "Clean shot, definitely +10 rep worthy!" }
-        ]
-      },
-      {
-        id: "post-2",
-        username: "urban_explorer",
-        userAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80",
-        repBadge: "bmax Elite",
-        repScore: 1890,
-        imageUrl: "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=800&auto=format&fit=crop&q=80",
-        caption: "Night light reflections in Tokyo streets 🌃 #tokyo #cityscape #bmax",
-        songTitle: "Midnight Drift - Synthwave Radio 🎧",
-        upvotes: 2890,
-        commentsCount: 142,
-        saves: 512,
-        isLiked: false,
-        isSaved: false,
-        comments: [
-          { user: "@tokyo_drift", text: "Incredible perspective!" }
-        ]
-      },
-      {
-        id: "post-3",
-        username: "art_creator",
-        userAvatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80",
-        repBadge: "bmax Master",
-        repScore: 5120,
-        imageUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80",
-        caption: "Abstract liquid gradient color render ✨ What do you think? #art #3d #fluid",
-        songTitle: "Ambient Waves - Horizon 🌊",
-        upvotes: 4100,
-        commentsCount: 310,
-        saves: 980,
-        isLiked: false,
-        isSaved: false,
-        comments: [
-          { user: "@design_pro", text: "This render is top tier visual content." }
-        ]
-      }
-    ];
-
-    let userState = {
-      myReputation: 1480,
-      myUploads: []
-    };
-
-    let activePostId = null;
-
-    // -----------------------------------------------------------------
-    // 3. RENDER FEED ITEMS
-    // -----------------------------------------------------------------
-    function renderFeed() {
-      const container = document.getElementById('feed-container');
-      container.innerHTML = '';
-
-      postsData.forEach((post) => {
-        const postElement = document.createElement('div');
-        postElement.className = "w-full h-full snap-start-item relative flex items-center justify-center overflow-hidden bg-black";
-        postElement.id = `card-${post.id}`;
-
-        postElement.innerHTML = `
-          <!-- Image Content -->
-          <img src="${post.imageUrl}" class="w-full h-full object-cover select-none" alt="${post.caption}" loading="lazy" />
-
-          <!-- Bottom Vignette Gradient Overlay -->
-          <div class="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/90 pointer-events-none"></div>
-
-          <!-- Right Action Bar -->
-          <div class="absolute right-3 bottom-20 z-20 flex flex-col items-center space-y-5">
-            
-            <!-- Creator Avatar with Follow Button -->
-            <div class="relative group">
-              <img src="${post.userAvatar}" class="w-12 h-12 rounded-full border-2 border-bmax-pink object-cover shadow-lg" alt="${post.username}">
-              <button onclick="showRepToast('Followed ${post.username}!')" class="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-bmax-pink text-white flex items-center justify-center border border-black shadow">
-                <i data-lucide="plus" class="w-3 h-3 stroke-[3]"></i>
-              </button>
-            </div>
-
-            <!-- Like / Upvote Button -->
-            <button onclick="toggleUpvote('${post.id}')" class="flex flex-col items-center group">
-              <div id="like-icon-${post.id}" class="p-3 rounded-full glass transition group-active:scale-125 ${post.isLiked ? 'text-bmax-pink bg-bmax-pink/20' : 'text-white'}">
-                <i data-lucide="heart" class="w-6 h-6 ${post.isLiked ? 'fill-current' : ''}"></i>
-              </div>
-              <span id="like-count-${post.id}" class="text-[11px] font-bold mt-1 shadow-sm">${formatNumber(post.upvotes)}</span>
-            </button>
-
-            <!-- Comments Button -->
-            <button onclick="openCommentsModal('${post.id}')" class="flex flex-col items-center group">
-              <div class="p-3 rounded-full glass text-white transition group-active:scale-110">
-                <i data-lucide="message-circle" class="w-6 h-6"></i>
-              </div>
-              <span class="text-[11px] font-bold mt-1 shadow-sm">${post.commentsCount}</span>
-            </button>
-
-            <!-- Bookmark / Save Button -->
-            <button onclick="toggleBookmark('${post.id}')" class="flex flex-col items-center group">
-              <div id="save-icon-${post.id}" class="p-3 rounded-full glass transition ${post.isSaved ? 'text-amber-400 bg-amber-400/20' : 'text-white'}">
-                <i data-lucide="bookmark" class="w-6 h-6 ${post.isSaved ? 'fill-current' : ''}"></i>
-              </div>
-              <span class="text-[11px] font-bold mt-1 shadow-sm">${post.saves}</span>
-            </button>
-
-            <!-- Share Button -->
-            <button onclick="copyShareLink()" class="flex flex-col items-center group">
-              <div class="p-3 rounded-full glass text-white transition group-active:scale-110">
-                <i data-lucide="share-2" class="w-6 h-6"></i>
-              </div>
-              <span class="text-[11px] font-bold mt-1 shadow-sm">Share</span>
-            </button>
-
-            <!-- Rotating Music Disk -->
-            <div class="relative pt-2">
-              <div class="w-10 h-10 rounded-full bg-neutral-900 border-2 border-neutral-700 flex items-center justify-center animate-spin-slow overflow-hidden">
-                <img src="${post.userAvatar}" class="w-5 h-5 rounded-full object-cover">
-              </div>
-            </div>
-
-          </div>
-
-          <!-- Bottom Metadata Overlay -->
-          <div class="absolute left-4 bottom-20 right-20 z-20 flex flex-col space-y-2 pointer-events-auto">
-            
-            <!-- Username & Reputation Badge -->
-            <div class="flex items-center space-x-2">
-              <span class="font-extrabold text-base tracking-wide text-white drop-shadow">@${post.username}</span>
-              <span class="text-[10px] font-semibold bg-gradient-to-r from-bmax-pink to-bmax-violet text-white px-2 py-0.5 rounded-full border border-white/20 flex items-center gap-1 shadow">
-                <i data-lucide="star" class="w-3 h-3 fill-current"></i>
-                <span id="post-rep-badge-${post.id}">${post.repScore} Rep</span>
-              </span>
-            </div>
-
-            <!-- Post Caption -->
-            <p class="text-xs text-neutral-200 line-clamp-2 leading-relaxed drop-shadow-md">
-              ${post.caption}
-            </p>
-
-            <!-- Music Marquee Track -->
-            <div class="flex items-center space-x-2 text-xs text-neutral-300 font-medium">
-              <i data-lucide="music" class="w-3.5 h-3.5 text-bmax-cyan animate-pulse"></i>
-              <div class="overflow-hidden w-48 whitespace-nowrap">
-                <div class="inline-block animate-marquee">${post.songTitle}</div>
-              </div>
-            </div>
-
-          </div>
-        `;
-
-        container.appendChild(postElement);
-      });
-
-      // Re-initialize Lucide Icons after dynamic insertion
-      lucide.createIcons();
-    }
-
-    // -----------------------------------------------------------------
-    // 4. INTERACTION & UPVOTE REPUTATION LOGIC
-    // -----------------------------------------------------------------
-    function toggleUpvote(postId) {
-      const post = postsData.find(p => p.id === postId);
-      if (!post) return;
-
-      post.isLiked = !post.isLiked;
-      
-      if (post.isLiked) {
-        post.upvotes += 1;
-        post.repScore += 10; // Earn reputation on post
-        userState.myReputation += 5; // User earns rep for engaging
-        showRepToast("+10 Rep awarded to @" + post.username + "!");
-      } else {
-        post.upvotes -= 1;
-        post.repScore -= 10;
-      }
-
-      // Update UI elements directly
-      const likeIcon = document.getElementById(`like-icon-${postId}`);
-      const likeCount = document.getElementById(`like-count-${postId}`);
-      const repBadge = document.getElementById(`post-rep-badge-${postId}`);
-
-      if (likeIcon && likeCount && repBadge) {
-        likeIcon.className = `p-3 rounded-full glass transition group-active:scale-125 ${post.isLiked ? 'text-bmax-pink bg-bmax-pink/20' : 'text-white'}`;
-        likeIcon.innerHTML = `<i data-lucide="heart" class="w-6 h-6 ${post.isLiked ? 'fill-current' : ''}"></i>`;
-        likeCount.innerText = formatNumber(post.upvotes);
-        repBadge.innerText = `${post.repScore} Rep`;
-        lucide.createIcons();
-      }
-
-      updateProfileUI();
-    }
-
-    function toggleBookmark(postId) {
-      const post = postsData.find(p => p.id === postId);
-      if (!post) return;
-
-      post.isSaved = !post.isSaved;
-      post.saves += post.isSaved ? 1 : -1;
-
-      const saveIcon = document.getElementById(`save-icon-${postId}`);
-      if (saveIcon) {
-        saveIcon.className = `p-3 rounded-full glass transition ${post.isSaved ? 'text-amber-400 bg-amber-400/20' : 'text-white'}`;
-        saveIcon.innerHTML = `<i data-lucide="bookmark" class="w-6 h-6 ${post.isSaved ? 'fill-current' : ''}"></i>`;
-        lucide.createIcons();
-      }
-
-      showRepToast(post.isSaved ? "Saved to your bookmarks!" : "Removed from saved");
-    }
-
-    // -----------------------------------------------------------------
-    // 5. COMMENTS SYSTEM LOGIC
-    // -----------------------------------------------------------------
-    function openCommentsModal(postId) {
-      activePostId = postId;
-      const post = postsData.find(p => p.id === postId);
-      if (!post) return;
-
-      const modal = document.getElementById('comments-modal');
-      const list = document.getElementById('comments-list');
-      const title = document.getElementById('comments-count-title');
-
-      title.innerText = `Comments (${post.comments.length})`;
-      list.innerHTML = '';
-
-      if (post.comments.length === 0) {
-        list.innerHTML = `<p class="text-center text-xs text-neutral-500 py-8">No comments yet. Be the first to share your thoughts!</p>`;
-      } else {
-        post.comments.forEach(c => {
-          const item = document.createElement('div');
-          item.className = "flex space-x-2.5 text-xs";
-          item.innerHTML = `
-            <div class="w-7 h-7 rounded-full bg-neutral-800 flex items-center justify-center font-bold text-bmax-cyan shrink-0">
-              ${c.user.charAt(1).toUpperCase()}
-            </div>
-            <div>
-              <span class="font-bold text-neutral-300">${c.user}</span>
-              <p class="text-neutral-400 mt-0.5">${c.text}</p>
-            </div>
-          `;
-          list.appendChild(item);
-        });
-      }
-
-      modal.classList.remove('hidden');
-    }
-
-    function closeCommentsModal() {
-      document.getElementById('comments-modal').classList.add('hidden');
-    }
-
-    function submitComment() {
-      const input = document.getElementById('comment-input');
-      const text = input.value.trim();
-      if (!text || !activePostId) return;
-
-      const post = postsData.find(p => p.id === activePostId);
-      if (post) {
-        post.comments.push({ user: "@alex_bmax", text: text });
-        post.commentsCount += 1;
-        input.value = '';
-        openCommentsModal(activePostId);
-        showRepToast("+2 Rep for joining discussion!");
-        userState.myReputation += 2;
-        updateProfileUI();
-      }
-    }
-
-    // -----------------------------------------------------------------
-    // 6. IMAGE UPLOAD & SUPABASE SIMULATION
-    // -----------------------------------------------------------------
-    function openUploadModal() {
-      const modal = document.getElementById('upload-modal');
-      modal.classList.remove('hidden');
-      setTimeout(() => modal.classList.remove('opacity-0'), 10);
-    }
-
-    function closeUploadModal() {
-      const modal = document.getElementById('upload-modal');
-      modal.classList.add('opacity-0');
-      setTimeout(() => {
-        modal.classList.add('hidden');
-        resetUploadForm();
-      }, 300);
-    }
-
-    function previewSelectedImage(event) {
-      const file = event.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const preview = document.getElementById('image-preview');
-          const placeholder = document.getElementById('upload-placeholder');
-          preview.src = e.target.result;
-          preview.classList.remove('hidden');
-          placeholder.classList.add('hidden');
-        };
-        reader.readAsDataURL(file);
-      }
-    }
-
-    function resetUploadForm() {
-      document.getElementById('upload-form').reset();
-      document.getElementById('image-preview').classList.add('hidden');
-      document.getElementById('image-preview').src = '';
-      document.getElementById('upload-placeholder').classList.remove('hidden');
-      document.getElementById('upload-progress-container').classList.add('hidden');
-      document.getElementById('submit-upload-btn').disabled = false;
-    }
-
-    async function handleImageUpload(event) {
-      event.preventDefault();
-
-      const fileInput = document.getElementById('image-file-input');
-      const captionInput = document.getElementById('upload-caption');
-      const file = fileInput.files[0];
-
-      if (!file) {
-        showRepToast("Please select an image first!");
-        return;
-      }
-
-      const progressContainer = document.getElementById('upload-progress-container');
-      const progressBar = document.getElementById('upload-progress-bar');
-      const statusText = document.getElementById('upload-status-text');
-      const percentText = document.getElementById('upload-percent-text');
-      const submitBtn = document.getElementById('submit-upload-btn');
-
-      progressContainer.classList.remove('hidden');
-      submitBtn.disabled = true;
-
-      // Simulated Smooth Upload Steps (Format check -> Compression -> Storage -> DB)
-      const steps = [
-        { percent: 25, status: "Validating format & size..." },
-        { percent: 50, status: "Compressing image client-side..." },
-        { percent: 80, status: "Uploading to Supabase Storage..." },
-        { percent: 100, status: "Inserting record into database..." }
-      ];
-
-      for (let step of steps) {
-        await new Promise(resolve => setTimeout(resolve, 400));
-        progressBar.style.width = `${step.percent}%`;
-        statusText.innerText = step.status;
-        percentText.innerText = `${step.percent}%`;
-      }
-
-      // Read locally for immediate feed display
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const newPost = {
-          id: `post-${Date.now()}`,
-          username: "alex_bmax",
-          userAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
-          repBadge: "bmax Elite",
-          repScore: 10,
-          imageUrl: e.target.result,
-          caption: captionInput.value || "New visual upload on bmax ✨ #bmax",
-          songTitle: "Original Sound - alex_bmax 🎵",
-          upvotes: 1,
-          commentsCount: 0,
-          saves: 0,
-          isLiked: true,
-          isSaved: false,
-          comments: []
-        };
-
-        // Unshift to top of feed
-        postsData.unshift(newPost);
-        userState.myUploads.unshift(newPost);
-        userState.myReputation += 10; // Award +10 Rep
-
-        renderFeed();
-        updateProfileUI();
-        closeUploadModal();
-        showRepToast("Image published! +10 Rep Points Earned! 🚀");
-      };
-      reader.readAsDataURL(file);
-    }
-
-    // -----------------------------------------------------------------
-    // 7. UI NAVIGATION & TOAST UTILITIES
-    // -----------------------------------------------------------------
-    function switchMainTab(tab) {
-      const profileView = document.getElementById('profile-view');
-      const feedContainer = document.getElementById('feed-container');
-
-      // Update Nav Button Colors
-      ['feed', 'discover', 'inbox', 'profile'].forEach(t => {
-        const btn = document.getElementById(`nav-${t}`);
-        if (btn) {
-          if (t === tab) {
-            btn.className = "flex flex-col items-center text-white transition";
-          } else {
-            btn.className = "flex flex-col items-center text-neutral-400 hover:text-white transition";
-          }
+    <script>
+        // Supabase configuration placeholder (Replace with your own project credentials)
+        const SUPABASE_URL = 'https://YOUR_SUPABASE_PROJECT.supabase.co';
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        let supabaseClient = null;
+        try {
+            if (window.supabase) {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            }
+        } catch (e) {
+            console.warn('Supabase initialization fallback active.');
         }
-      });
 
-      if (tab === 'profile') {
-        profileView.classList.remove('hidden');
-        updateProfileUI();
-      } else {
-        profileView.classList.add('hidden');
-      }
+        // State Management
+        let userProfile = {
+            name: "Alex Morgan",
+            username: "@alex_creator",
+            bio: "Creating digital worlds and sharing vibrant moments one capture at a time. Welcome to my bmax profile! 🚀",
+            website: "https://bmax.social",
+            following: 142,
+            followers: 3800,
+            favorites: 524,
+            reputationPoints: 48,
+            avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200"
+        };
 
-      if (tab === 'discover' || tab === 'inbox') {
-        showRepToast(`Navigated to ${tab.toUpperCase()}`);
-      }
-    }
+        let activitiesLog = [
+            { text: "Uploaded new image (+2 rep)", time: "2h ago" },
+            { text: "Received upvote (+10 rep)", time: "Yesterday" }
+        ];
 
-    function switchFeedTab(tabName) {
-      const btnFollowing = document.getElementById('tab-following');
-      const btnForYou = document.getElementById('tab-foryou');
+        function switchTab(tabName) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`view-${tabName}`).classList.remove('hidden');
 
-      if (tabName === 'following') {
-        btnFollowing.className = "text-white border-b-2 border-bmax-pink pb-0.5 cursor-pointer";
-        btnForYou.className = "text-neutral-400 hover:text-white transition cursor-pointer";
-        showRepToast("Switched to Following Feed");
-      } else {
-        btnForYou.className = "text-white border-b-2 border-bmax-pink pb-0.5 cursor-pointer";
-        btnFollowing.className = "text-neutral-400 hover:text-white transition cursor-pointer";
-        showRepToast("Switched to For You Feed");
-      }
-    }
+            // Update navigation icons
+            const tabs = ['home', 'discover', 'inbox', 'profile'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`nav-btn-${t}`);
+                if (btn) {
+                    if (t === tabName) {
+                        btn.className = "flex flex-col items-center text-pink-500 space-y-1 transition";
+                    } else {
+                        btn.className = "flex flex-col items-center text-slate-400 hover:text-white space-y-1 transition";
+                    }
+                }
+            });
 
-    function updateProfileUI() {
-      document.getElementById('profile-rep-score').innerText = formatNumber(userState.myReputation);
-      
-      const grid = document.getElementById('profile-gallery-grid');
-      grid.innerHTML = '';
+            // Toggle top header visibility
+            const header = document.querySelector('header');
+            if (tabName === 'home') {
+                header.classList.remove('hidden');
+            } else {
+                header.classList.add('hidden');
+            }
+        }
 
-      if (userState.myUploads.length === 0) {
-        grid.innerHTML = `<div class="col-span-3 text-center text-xs text-neutral-500 py-8">No uploaded images yet. Tap (+) to upload your first picture!</div>`;
-      } else {
-        userState.myUploads.forEach(post => {
-          const item = document.createElement('div');
-          item.className = "relative aspect-square bg-neutral-900 rounded-md overflow-hidden group cursor-pointer";
-          item.innerHTML = `
-            <img src="${post.imageUrl}" class="w-full h-full object-cover">
-            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center space-x-1 text-white text-xs font-bold">
-              <i data-lucide="heart" class="w-3.5 h-3.5 fill-current text-bmax-pink"></i>
-              <span>${post.upvotes}</span>
-            </div>
-          `;
-          grid.appendChild(item);
-        });
-        lucide.createIcons();
-      }
-    }
+        function switchFeedTab(subTab) {
+            const followingBtn = document.getElementById('header-following-btn');
+            const foryouBtn = document.getElementById('header-foryou-btn');
+            if (subTab === 'following') {
+                followingBtn.className = "text-white border-b-2 border-pink-500 pb-0.5";
+                foryouBtn.className = "transition hover:text-white";
+            } else {
+                foryouBtn.className = "text-white border-b-2 border-pink-500 pb-0.5";
+                followingBtn.className = "transition hover:text-white";
+            }
+        }
 
-    function showRepToast(message) {
-      const toast = document.getElementById('rep-toast');
-      const text = document.getElementById('rep-toast-text');
-      text.innerText = message;
+        function switchInboxTab(tab) {
+            const actBtn = document.getElementById('inbox-tab-activity');
+            const msgBtn = document.getElementById('inbox-tab-messages');
+            if (tab === 'activity') {
+                actBtn.className = "px-3 py-1 rounded-lg text-xs font-semibold bg-pink-500 text-white transition";
+                msgBtn.className = "px-3 py-1 rounded-lg text-xs font-semibold text-slate-400 transition";
+            } else {
+                msgBtn.className = "px-3 py-1 rounded-lg text-xs font-semibold bg-pink-500 text-white transition";
+                actBtn.className = "px-3 py-1 rounded-lg text-xs font-semibold text-slate-400 transition";
+            }
+        }
 
-      toast.classList.remove('opacity-0', '-translate-y-4');
-      toast.classList.add('opacity-100', 'translate-y-0');
+        function switchProfileTab(tab) {
+            const postsBtn = document.getElementById('profile-tab-posts');
+            const savedBtn = document.getElementById('profile-tab-saved');
+            if (tab === 'posts') {
+                postsBtn.className = "text-pink-500 border-b-2 border-pink-500 pb-2";
+                savedBtn.className = "text-slate-400 hover:text-white pb-2";
+            } else {
+                savedBtn.className = "text-pink-500 border-b-2 border-pink-500 pb-2";
+                postsBtn.className = "text-slate-400 hover:text-white pb-2";
+            }
+        }
 
-      setTimeout(() => {
-        toast.classList.remove('opacity-100', 'translate-y-0');
-        toast.classList.add('opacity-0', '-translate-y-4');
-      }, 2500);
-    }
+        function openUploadModal() {
+            document.getElementById('upload-modal').classList.remove('hidden');
+        }
 
-    function copyShareLink() {
-      const tempInput = document.createElement('input');
-      tempInput.value = window.location.href;
-      document.body.appendChild(tempInput);
-      tempInput.select();
-      document.execCommand('copy');
-      document.body.removeChild(tempInput);
-      showRepToast("Link copied to clipboard!");
-    }
+        function closeUploadModal() {
+            document.getElementById('upload-modal').classList.add('hidden');
+        }
 
-    function triggerSearchToast() {
-      showRepToast("Search features coming soon!");
-    }
+        function previewSelectedImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const previewImg = document.getElementById('upload-preview-img');
+                    const placeholder = document.getElementById('upload-placeholder-content');
+                    previewImg.src = e.target.result;
+                    previewImg.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
+                }
+                reader.readAsDataURL(file);
+            }
+        }
 
-    function formatNumber(num) {
-      if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
-      if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
-      return num;
-    }
+        function submitUpload() {
+            // Add +2 reputation points per upload
+            userProfile.reputationPoints += 2;
+            activitiesLog.unshift({ text: "Uploaded new image (+2 rep)", time: "Just now" });
 
-    // -----------------------------------------------------------------
-    // 8. INITIAL APPLICATION MOUNT
-    // -----------------------------------------------------------------
-    window.onload = function() {
-      renderFeed();
-      lucide.createIcons();
-    };
-  </script>
+            updateProfileUI();
+            updateSettingsUI();
+            closeUploadModal();
+
+            // Reset upload form
+            document.getElementById('upload-preview-img').classList.add('hidden');
+            document.getElementById('upload-placeholder-content').classList.remove('hidden');
+            document.getElementById('upload-caption').value = '';
+            document.getElementById('upload-file-input').value = '';
+        }
+
+        function openEditProfileModal() {
+            document.getElementById('input-profile-name').value = userProfile.name;
+            document.getElementById('input-username').value = userProfile.username;
+            document.getElementById('input-bio').value = userProfile.bio;
+            document.getElementById('input-website').value = userProfile.website;
+            updateBioCounter();
+            document.getElementById('edit-profile-modal').classList.remove('hidden');
+        }
+
+        function closeEditProfileModal() {
+            document.getElementById('edit-profile-modal').classList.add('hidden');
+        }
+
+        function updateBioCounter() {
+            const bioText = document.getElementById('input-bio').value;
+            document.getElementById('bio-char-count').innerText = `${bioText.length}/200`;
+        }
+
+        function saveProfileChanges() {
+            userProfile.name = document.getElementById('input-profile-name').value;
+            userProfile.username = document.getElementById('input-username').value;
+            userProfile.bio = document.getElementById('input-bio').value;
+            userProfile.website = document.getElementById('input-website').value;
+
+            updateProfileUI();
+            closeEditProfileModal();
+        }
+
+        function openSettingsModal() {
+            updateSettingsUI();
+            document.getElementById('settings-modal').classList.remove('hidden');
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settings-modal').classList.add('hidden');
+        }
+
+        function updateProfileUI() {
+            document.getElementById('profile-display-name').innerText = userProfile.name;
+            document.getElementById('profile-username').innerText = userProfile.username;
+            document.getElementById('profile-bio').innerText = userProfile.bio;
+            document.getElementById('stat-following').innerText = userProfile.following;
+            document.getElementById('stat-followers').innerText = userProfile.followers;
+            document.getElementById('stat-favorites').innerText = userProfile.favorites;
+
+            // Reputation Gauge
+            document.getElementById('reputation-score-badge').innerText = `${userProfile.reputationPoints} Points`;
+            const gaugePercentage = Math.min(100, (userProfile.reputationPoints / 100) * 100);
+            document.getElementById('reputation-gauge-bar').style.width = `${gaugePercentage}%`;
+
+            // Website link
+            const webContainer = document.getElementById('profile-website-container');
+            const webLink = document.getElementById('profile-website-link');
+            if (userProfile.website && userProfile.website.trim() !== '') {
+                webLink.href = userProfile.website;
+                webLink.innerText = userProfile.website.replace('https://', '').replace('http://', '');
+                webContainer.classList.remove('hidden');
+                webContainer.classList.add('flex');
+            } else {
+                webContainer.classList.add('hidden');
+                webContainer.classList.remove('flex');
+            }
+        }
+
+        function updateSettingsUI() {
+            document.getElementById('settings-total-points').innerText = `${userProfile.reputationPoints} pts`;
+            const logContainer = document.getElementById('activities-log-list');
+            logContainer.innerHTML = activitiesLog.map(act => `
+                <div class="flex justify-between text-slate-300 border-b border-slate-900 pb-1">
+                    <span>${act.text}</span>
+                    <span class="text-slate-500">${act.time}</span>
+                </div>
+            `).join('');
+        }
+
+        // Initialize on load
+        window.onload = function() {
+            updateProfileUI();
+        }
+    </script>
 </body>
 </html>
