@@ -1,3 +1,4 @@
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -57,7 +58,27 @@
         
         <!-- HOME FEED VIEW -->
         <section id="view-home" class="view-section w-full h-[calc(100vh-7rem)] snap-container overflow-y-scroll no-scrollbar flex flex-col">
-            <!-- Feed items will be dynamically injected here from Supabase database -->
+            <!-- Feed items will be dynamically injected here -->
+            <div class="snap-item w-full h-full flex flex-col justify-center items-center bg-slate-900 relative">
+                <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600" class="w-full h-full object-cover" alt="Feed Item">
+                <div class="absolute bottom-6 left-4 right-16 z-20">
+                    <h3 class="font-bold text-lg text-white">@alex_creator</h3>
+                    <p class="text-sm text-slate-200 mt-1">Neon cyber aesthetics in downtown Tokyo 🌃✨ #bmax #cyberpunk</p>
+                </div>
+                <div class="absolute bottom-16 right-4 z-20 flex flex-col items-center space-y-4">
+                    <button class="w-12 h-12 bg-slate-900/60 backdrop-blur-md rounded-full flex items-center justify-center text-pink-500 text-xl shadow-lg hover:scale-110 transition">
+                        <i class="fa-solid fa-heart"></i>
+                    </button>
+                    <span class="text-xs font-bold text-white">1.4K</span>
+                    <button class="w-12 h-12 bg-slate-900/60 backdrop-blur-md rounded-full flex items-center justify-center text-white text-xl shadow-lg hover:scale-110 transition">
+                        <i class="fa-solid fa-comment"></i>
+                    </button>
+                    <span class="text-xs font-bold text-white">84</span>
+                    <button class="w-12 h-12 bg-slate-900/60 backdrop-blur-md rounded-full flex items-center justify-center text-white text-xl shadow-lg hover:scale-110 transition">
+                        <i class="fa-solid fa-bookmark"></i>
+                    </button>
+                </div>
+            </div>
         </section>
 
         <!-- DISCOVER VIEW -->
@@ -182,7 +203,18 @@
                 </div>
                 <!-- Grid items -->
                 <div id="profile-posts-grid" class="grid grid-cols-3 gap-2 mt-3">
-                    <!-- Dynamic user posts grid -->
+                    <div class="bg-slate-900 rounded-xl aspect-[3/4] overflow-hidden relative group">
+                        <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=300" class="w-full h-full object-cover">
+                        <div class="absolute bottom-1 left-1 text-[10px] font-bold text-white bg-black/50 px-1.5 py-0.5 rounded">
+                            <i class="fa-solid fa-heart mr-1 text-pink-500"></i>1.4K
+                        </div>
+                    </div>
+                    <div class="bg-slate-900 rounded-xl aspect-[3/4] overflow-hidden relative group">
+                        <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=300" class="w-full h-full object-cover">
+                        <div class="absolute bottom-1 left-1 text-[10px] font-bold text-white bg-black/50 px-1.5 py-0.5 rounded">
+                            <i class="fa-solid fa-heart mr-1 text-pink-500"></i>820
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -237,8 +269,7 @@
                 <i class="fa-solid fa-bolt"></i>
                 <span>Uploading awards <strong>+2 reputation points</strong> instantly!</span>
             </div>
-            <!-- Connected to handleImageUpload(event) -->
-            <button onclick="handleImageUpload(event)" id="submit-upload-btn" class="w-full bg-gradient-to-r from-pink-500 to-cyan-400 text-slate-950 font-bold py-3 rounded-xl text-xs transition shadow-lg hover:opacity-90">Post to bmax</button>
+            <button onclick="submitUpload()" class="w-full bg-gradient-to-r from-pink-500 to-cyan-400 text-slate-950 font-bold py-3 rounded-xl text-xs transition shadow-lg hover:opacity-9">Post to bmax</button>
         </div>
     </div>
 
@@ -299,11 +330,11 @@
                     </div>
                     <div class="flex justify-between text-xs text-slate-300">
                         <span>Upload Bonuses (+2 pts each)</span>
-                        <span class="font-bold text-white">Uploads</span>
+                        <span class="font-bold text-white">12 Uploads</span>
                     </div>
                     <div class="flex justify-between text-xs text-slate-300">
                         <span>Upvote Rewards (+10 pts each)</span>
-                        <span class="font-bold text-white">Likes</span>
+                        <span class="font-bold text-white">2 Upvotes</span>
                     </div>
                 </div>
                 <!-- Activities Log Section -->
@@ -314,6 +345,10 @@
                             <span>Uploaded new image (+2 rep)</span>
                             <span class="text-slate-500">2h ago</span>
                         </div>
+                        <div class="flex justify-between text-slate-300 border-b border-slate-900 pb-1">
+                            <span>Received upvote (+10 rep)</span>
+                            <span class="text-slate-500">Yesterday</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -322,17 +357,16 @@
     </div>
 
     <script>
-        // Supabase configuration connected with your provided keys
-        const SUPABASE_URL = 'https://nlkjduhfezqaqzdyjqhu.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_XMqzyI6aZ92LddVlnGdzqw_ZpCoiVEY';
+        // Supabase configuration placeholder (Replace with your own project credentials)
+        const SUPABASE_URL = 'https://YOUR_SUPABASE_PROJECT.supabase.co';
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
         let supabaseClient = null;
-
         try {
             if (window.supabase) {
                 supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
             }
         } catch (e) {
-            console.warn('Supabase initialization error:', e);
+            console.warn('Supabase initialization fallback active.');
         }
 
         // State Management
@@ -353,12 +387,11 @@
             { text: "Received upvote (+10 rep)", time: "Yesterday" }
         ];
 
-        let postsData = [];
-
         function switchTab(tabName) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
             document.getElementById(`view-${tabName}`).classList.remove('hidden');
 
+            // Update navigation icons
             const tabs = ['home', 'discover', 'inbox', 'profile'];
             tabs.forEach(t => {
                 const btn = document.getElementById(`nav-btn-${t}`);
@@ -371,6 +404,7 @@
                 }
             });
 
+            // Toggle top header visibility
             const header = document.querySelector('header');
             if (tabName === 'home') {
                 header.classList.remove('hidden');
@@ -438,142 +472,101 @@
             }
         }
 
-        // =================================================================
-        // FETCH PERSISTENT POSTS FROM SUPABASE DATABASE ON LOAD
-        // =================================================================
-        async function fetchPostsFromDatabase() {
-            if (!supabaseClient) {
-                renderFeed();
-                renderProfilePosts();
-                return;
-            }
+        function submitUpload() {
+            // Add +2 reputation points per upload
+            userProfile.reputationPoints += 2;
+            activitiesLog.unshift({ text: "Uploaded new image (+2 rep)", time: "Just now" });
 
-            try {
-                const { data, error } = await supabaseClient
-                    .from('posts')
-                    .select(`
-                        id,
-                        image_url,
-                        caption,
-                        upvotes,
-                        created_at,
-                        profiles (
-                            username,
-                            avatar_url
-                        )
-                    `)
-                    .order('created_at', { ascending: false });
+            updateProfileUI();
+            updateSettingsUI();
+            closeUploadModal();
 
-                if (error) throw error;
-
-                if (data && data.length > 0) {
-                    postsData = data.map(post => ({
-                        id: post.id,
-                        username: post.profiles?.username || "bmax_user",
-                        userAvatar: post.profiles?.avatar_url || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100",
-                        imageUrl: post.image_url,
-                        caption: post.caption || "",
-                        upvotes: post.upvotes || 0
-                    }));
-                }
-                renderFeed();
-                renderProfilePosts();
-            } catch (err) {
-                console.error("Error fetching posts:", err);
-            }
-        }
-
-        // =================================================================
-        // HANDLE IMAGE UPLOAD TO SUPABASE STORAGE & DATABASE (+2 REPUTATION RULE)
-        // =================================================================
-        async function handleImageUpload(event) {
-            event.preventDefault();
-
-            const fileInput = document.getElementById('upload-file-input');
-            const captionInput = document.getElementById('upload-caption');
-            const file = fileInput.files[0];
-
-            if (!file) {
-                alert("Please select an image first!");
-                return;
-            }
-
-            if (!supabaseClient) {
-                alert("Supabase client is not initialized.");
-                return;
-            }
-
-            try {
-                const submitBtn = document.getElementById('submit-upload-btn');
-                submitBtn.innerText = "Uploading to Supabase...";
-                submitBtn.disabled = true;
-
-                // Get current auth session user
-                const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
-                if (authError || !user) {
-                    throw new Error("You must be logged in to upload pictures.");
-                }
-
-                // 1. Upload file to Supabase Storage bucket ('bmax-images')
-                const fileExt = file.name.split('.').pop();
-                const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-
-                const { error: storageError } = await supabaseClient.storage
-                    .from('bmax-images')
-                    .upload(fileName, file, { cacheControl: '3600', upsert: false });
-
-                if (storageError) throw storageError;
-
-                // Get public URL
-                const { data: publicUrlData } = supabaseClient.storage
-                    .from('bmax-images')
-                    .getPublicUrl(fileName);
-
-                // 2. Insert record into Supabase 'posts' table
-                const { error: dbError } = await supabaseClient
-                    .from('posts')
-                    .insert([
-                        {
-                            user_id: user.id,
-                            image_url: publicUrlData.publicUrl,
-                            caption: captionInput.value || ""
-                        }
-                    ]);
-
-                if (dbError) throw dbError;
-
-                // 3. Award +2 reputation gauge points instantly
-                userProfile.reputationPoints += 2;
-                activitiesLog.unshift({ text: "Uploaded new image (+2 rep)", time: "Just now" });
-
-                await fetchPostsFromDatabase();
-                updateProfileUI();
-                updateSettingsUI();
-                closeUploadModal();
-                resetUploadForm();
-                
-                submitBtn.innerText = "Post to bmax";
-                submitBtn.disabled = false;
-
-            } catch (err) {
-                console.error("Upload failed:", err);
-                alert("Upload failed: " + err.message);
-                const submitBtn = document.getElementById('submit-upload-btn');
-                submitBtn.innerText = "Post to bmax";
-                submitBtn.disabled = false;
-            }
-        }
-
-        function resetUploadForm() {
+            // Reset upload form
             document.getElementById('upload-preview-img').classList.add('hidden');
             document.getElementById('upload-placeholder-content').classList.remove('hidden');
             document.getElementById('upload-caption').value = '';
             document.getElementById('upload-file-input').value = '';
         }
 
-        function renderFeed() {
-            const homeContainer = document.getElementById('view-home');
-            homeContainer.innerHTML = '';
+        function openEditProfileModal() {
+            document.getElementById('input-profile-name').value = userProfile.name;
+            document.getElementById('input-username').value = userProfile.username;
+            document.getElementById('input-bio').value = userProfile.bio;
+            document.getElementById('input-website').value = userProfile.website;
+            updateBioCounter();
+            document.getElementById('edit-profile-modal').classList.remove('hidden');
+        }
 
-            if (postsData.length === 0) {
-                homeContainer.innerHTML = `<div class="flex items-center justify-center h-full text-slate-500 text-xs
+        function closeEditProfileModal() {
+            document.getElementById('edit-profile-modal').classList.add('hidden');
+        }
+
+        function updateBioCounter() {
+            const bioText = document.getElementById('input-bio').value;
+            document.getElementById('bio-char-count').innerText = `${bioText.length}/200`;
+        }
+
+        function saveProfileChanges() {
+            userProfile.name = document.getElementById('input-profile-name').value;
+            userProfile.username = document.getElementById('input-username').value;
+            userProfile.bio = document.getElementById('input-bio').value;
+            userProfile.website = document.getElementById('input-website').value;
+
+            updateProfileUI();
+            closeEditProfileModal();
+        }
+
+        function openSettingsModal() {
+            updateSettingsUI();
+            document.getElementById('settings-modal').classList.remove('hidden');
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settings-modal').classList.add('hidden');
+        }
+
+        function updateProfileUI() {
+            document.getElementById('profile-display-name').innerText = userProfile.name;
+            document.getElementById('profile-username').innerText = userProfile.username;
+            document.getElementById('profile-bio').innerText = userProfile.bio;
+            document.getElementById('stat-following').innerText = userProfile.following;
+            document.getElementById('stat-followers').innerText = userProfile.followers;
+            document.getElementById('stat-favorites').innerText = userProfile.favorites;
+
+            // Reputation Gauge
+            document.getElementById('reputation-score-badge').innerText = `${userProfile.reputationPoints} Points`;
+            const gaugePercentage = Math.min(100, (userProfile.reputationPoints / 100) * 100);
+            document.getElementById('reputation-gauge-bar').style.width = `${gaugePercentage}%`;
+
+            // Website link
+            const webContainer = document.getElementById('profile-website-container');
+            const webLink = document.getElementById('profile-website-link');
+            if (userProfile.website && userProfile.website.trim() !== '') {
+                webLink.href = userProfile.website;
+                webLink.innerText = userProfile.website.replace('https://', '').replace('http://', '');
+                webContainer.classList.remove('hidden');
+                webContainer.classList.add('flex');
+            } else {
+                webContainer.classList.add('hidden');
+                webContainer.classList.remove('flex');
+            }
+        }
+
+        function updateSettingsUI() {
+            document.getElementById('settings-total-points').innerText = `${userProfile.reputationPoints} pts`;
+            const logContainer = document.getElementById('activities-log-list');
+            logContainer.innerHTML = activitiesLog.map(act => `
+                <div class="flex justify-between text-slate-300 border-b border-slate-900 pb-1">
+                    <span>${act.text}</span>
+                    <span class="text-slate-500">${act.time}</span>
+                </div>
+            `).join('');
+        }
+
+        // Initialize on load
+        window.onload = function() {
+            updateProfileUI();
+        }
+    </script>
+</body>
+</html>
